@@ -567,6 +567,18 @@ function write_blueprint_packages() {
             printf '\towner: "%s",\n' "$VENDOR"
             printf '\tsrc: "%s/etc/%s",\n' "$SRC" "$FILE"
             printf '\tfilename_from_src: true,\n'
+        elif [ "$CLASS" = "FIRMWARE" ]; then
+            printf 'prebuilt_firmware {\n'
+            printf '\tname: "%s",\n' "$PKGNAME"
+            printf '\towner: "%s",\n' "$VENDOR"
+            printf '\tsrc: "%s/firmware/%s",\n' "$SRC" "$FILE"
+            printf '\tfilename_from_src: true,\n'
+            printf '\tvendor: true,\n'
+            printf '\tproprietary: true,\n'
+            if [ "$ARG" = "RECOVERY_AVAILABLE" ]; then
+                    printf '\trecovery_available: true,\n'
+                    PACKAGE_LIST+=("$PKGNAME.recovery")
+            fi
         elif [ "$CLASS" = "EXECUTABLES" ]; then
             if ! objdump -a "$ANDROID_ROOT"/"$OUTDIR"/"$SRC"/bin/"$FILE" 2>/dev/null |grep -c 'file format elf' > /dev/null; then
                 # This is not an elf file, assume it's a shell script that doesn't have an extension
@@ -891,6 +903,12 @@ function write_product_packages() {
     local O_ETC=( $(prefix_match "odm/etc/") )
     if [ "${#O_ETC[@]}" -gt "0" ]; then
         write_blueprint_packages "ETC" "odm" "" "O_ETC" >> "$ANDROIDBP"
+    fi
+
+    # Firmware
+    local V_FIRMWARE=( $(prefix_match "vendor/firmware/") )
+    if [ "${#V_FIRMWARE[@]}" -gt "0" ]; then
+        write_blueprint_packages "FIRMWARE" "vendor" "" "V_FIRMWARE" >> "$ANDROIDBP"
     fi
 
     # Executables
